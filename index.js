@@ -1,6 +1,8 @@
 const express = require("express");
 const path = require("path");
 const { MongoClient } = require("mongodb");
+const engine = require("ejs-mate");
+
 const MONGO_URI = "mongodb://localhost:27017/";
 
 const opt = {
