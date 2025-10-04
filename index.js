@@ -1,5 +1,12 @@
 const express = require("express");
 const path = require("path");
+const { MongoClient } = require("mongodb");
+const MONGO_URI = "mongodb://localhost:27017/";
+
+const opt = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+};
 
 const app = express();
 
@@ -9,11 +16,11 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 app.get("/", (req, res) => {
-  res.render("home", { cg: 123 });
+  res.render("home");
 });
 
 app.get("/map/{id}", (req, res) => {
-  res.render("home", { cg: 123 });
+  res.render("map");
 });
 
 app.listen(3000, () => {
