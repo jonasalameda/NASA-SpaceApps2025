@@ -25,6 +25,10 @@ app.get("/map/{id}", (req, res) => {
   res.render("map");
 });
 
+app.post("/map", (req, res) => {
+  res.render("map", req.params.img);
+});
+
 app.listen(3000, () => {
   console.log("gate open!!!");
 });

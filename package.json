@@ -21,6 +21,7 @@
   "dependencies": {
     "ejs": "^3.1.10",
     "ejs-mate": "^4.0.0",
+    "exif-js": "^2.3.0",
     "express": "^5.1.0",
     "mongodb": "^6.20.0",
     "openseadragon": "^5.0.1"
