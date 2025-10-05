@@ -3,12 +3,546 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fits </title>
+    <title>Universal Lens Astronomy FITS Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f1c2e;
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Viewer Panel */
+        .viewer-panel {
+            flex: 1;
+            position: relative;
+            background: #1a2b3e;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .viewer-header {
+            padding: 15px 20px;
+            background: #152436;
+            border-bottom: 1px solid #2a3c52;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .viewer-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+        }
+
+        .viewer-container.grabbing {
+            cursor: grabbing;
+        }
+
+        .tiles-container {
+            position: absolute;
+            transform-origin: 0 0;
+        }
+
+        .tile {
+            position: absolute;
+            pointer-events: none;
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            width: 400px;
+            background: #152436;
+            border-left: 1px solid #2a3c52;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 20px;
+            border-bottom: 1px solid #2a3c52;
+            background: #1c2e44;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .panel-section {
+            margin-bottom: 25px;
+        }
+
+        .panel-section h3 {
+            color: #64b5f6;
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Workflow Diagram */
+        .workflow-diagram {
+            background: #1c2e44;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #2a3c52;
+            margin-bottom: 20px;
+        }
+
+        .workflow-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background: #233852;
+            border-radius: 5px;
+            border-left: 4px solid #64b5f6;
+        }
+
+        .workflow-step.current {
+            background: #1a457a;
+            border-left-color: #ffeb3b;
+        }
+
+        .step-number {
+            background: #64b5f6;
+            color: #0f1c2e;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: #1c2e44;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #2a3c52;
+            margin-bottom: 20px;
+        }
+
+        .upload-area {
+            border: 2px dashed #2a3c52;
+            border-radius: 5px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .upload-area:hover {
+            border-color: #64b5f6;
+        }
+
+        .upload-area.dragover {
+            border-color: #ffeb3b;
+            background: #233852;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .image-gallery {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .image-thumbnail {
+            background: #233852;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            border: 1px solid #2a3c52;
+            transition: all 0.2s;
+        }
+
+        .image-thumbnail:hover {
+            border-color: #64b5f6;
+            background: #1a457a;
+        }
+
+        .image-thumbnail.active {
+            border-color: #ffeb3b;
+            background: #1a457a;
+        }
+
+        /* Rest of the styles remain the same as previous version */
+        .coordinate-display {
+            background: #1c2e44;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            border: 1px solid #2a3c52;
+        }
+
+        .coordinate-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .zoom-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #1565c0;
+        }
+
+        .btn-secondary {
+            background: #455a64;
+        }
+
+        .btn-secondary:hover {
+            background: #37474f;
+        }
+
+        .btn-success {
+            background: #388e3c;
+        }
+
+        .btn-success:hover {
+            background: #2e7d32;
+        }
+
+        .bookmark-form {
+            background: #1c2e44;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #2a3c52;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #90a4ae;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #2a3c52;
+            border-radius: 4px;
+            background: #152436;
+            color: white;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .bookmarks-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .bookmark-item {
+            background: #1c2e44;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid #2a3c52;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .bookmark-item:hover {
+            background: #233852;
+        }
+
+        .bookmark-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #64b5f6;
+        }
+
+        .bookmark-coords {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #90a4ae;
+            margin-bottom: 5px;
+        }
+
+        .bookmark-description {
+            font-size: 12px;
+            color: #b0bec5;
+        }
+
+        .bookmark-marker {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #ffeb3b;
+            border: 2px solid #ff9800;
+            border-radius: 50%;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #64b5f6;
+        }
+
+        .spinner {
+            border: 3px solid #1a2b3e;
+            border-top: 3px solid #64b5f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-bar {
+            padding: 10px 20px;
+            background: #152436;
+            border-top: 1px solid #2a3c52;
+            font-size: 12px;
+            color: #90a4ae;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
 </head>
 <body>
-    <form action="/map" method="post">
-        <input type="file" title="img">
-        <button type="submit">Submit</button>
-    </form>
+    <div class="app-container">
+        <!-- Main Viewer -->
+        <div class="viewer-panel">
+            <div class="viewer-header">
+                <h1>🔭Universal Lens Astronomy FITS Viewer</h1>
+                <div class="zoom-controls">
+                    <button class="btn" id="zoom-in">Zoom In +</button>
+                    <button class="btn" id="zoom-out">Zoom Out -</button>
+                    <button class="btn btn-secondary" id="reset-view">Reset View</button>
+                </div>
+            </div>
+            
+            <div id="viewer-container" class="viewer-container">
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <div>Welcome! Upload an image or select a demo image to start.</div>
+                </div>
+                <div id="tiles-container" class="tiles-container"></div>
+            </div>
+
+            <div class="status-bar">
+                <span id="status-message">Ready to explore</span>
+                <span id="image-info">No image loaded</span>
+            </div>
+        </div>
+
+        <!-- Controls Sidebar -->
+        <div class="controls-panel">
+            <div class="panel-header">
+                <h2>🌌 Workflow Navigator</h2>
+                <p style="color: #90a4ae; font-size: 14px; margin-top: 5px;">
+                    Follow the steps to explore astronomical images
+                </p>
+            </div>
+
+            <div class="panel-content">
+                <!-- Workflow Diagram -->
+                <div class="panel-section">
+                    <h3>📋 Workflow Steps</h3>
+                    <div class="workflow-diagram">
+                        <div class="workflow-step" id="step-upload">
+                            <div class="step-number">1</div>
+                            <div>Upload Image / Select Previous</div>
+                        </div>
+                        <div class="workflow-step" id="step-explore">
+                            <div class="step-number">2</div>
+                            <div>Explore Image (Zoom & Pan)</div>
+                        </div>
+                        <div class="workflow-step" id="step-bookmark">
+                            <div class="step-number">3</div>
+                            <div>Create Bookmark with Coordinates</div>
+                        </div>
+                        <div class="workflow-step" id="step-comment">
+                            <div class="step-number">4</div>
+                            <div>Add Description & Commentary</div>
+                        </div>
+                        <div class="workflow-step" id="step-save">
+                            <div class="step-number">5</div>
+                            <div>Save to Bookmarks Database</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Management -->
+                <div class="panel-section">
+                    <h3>🖼️ Image Management</h3>
+                    <div class="upload-section">
+                        <div class="upload-area" id="upload-area">
+                            <div>📁 Drag & Drop FITS file here</div>
+                            <div style="font-size: 12px; color: #90a4ae; margin-top: 5px;">
+                                or click to browse files
+                            </div>
+                            <input type="file" id="file-input" class="file-input" accept=".fits,.fit">
+                        </div>
+                        
+                        <div class="image-gallery" id="image-gallery">
+                            <!-- Previous images will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coordinates Display -->
+                <div class="panel-section">
+                    <h3>🌍 Coordinates</h3>
+                    <div class="coordinate-display" id="coordinate-display">
+                        <div class="coordinate-row">
+                            <span>RA:</span>
+                            <span id="ra-display">--</span>
+                        </div>
+                        <div class="coordinate-row">
+                            <span>Dec:</span>
+                            <span id="dec-display">--</span>
+                        </div>
+                        <div class="coordinate-row">
+                            <span>Zoom Level:</span>
+                            <span id="zoom-display">0</span>
+                        </div>
+                        <div class="coordinate-row">
+                            <span>Pixel Scale:</span>
+                            <span id="scale-display">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bookmark Creation -->
+                <div class="panel-section">
+                    <h3>⭐ Create Bookmark</h3>
+                    <div class="bookmark-form">
+                        <div class="form-group">
+                            <label for="bookmark-title">Title *</label>
+                            <input type="text" id="bookmark-title" placeholder="Interesting feature, star, galaxy...">
+                        </div>
+                        <div class="form-group">
+                            <label for="bookmark-description">Description</label>
+                            <textarea id="bookmark-description" placeholder="Describe what you see..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="bookmark-commentary">Scientific Commentary</label>
+                            <textarea id="bookmark-commentary" placeholder="Add scientific notes, observations, hypotheses..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="bookmark-category">Category</label>
+                            <select id="bookmark-category">
+                                <option value="star">⭐ Star</option>
+                                <option value="galaxy">🌌 Galaxy</option>
+                                <option value="nebula">💫 Nebula</option>
+                                <option value="cluster">✨ Star Cluster</option>
+                                <option value="artifact">🔍 Artifact</option>
+                                <option value="unknown">❓ Unknown</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-success" id="create-bookmark" style="width: 100%;">
+                            💾 Save Bookmark
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bookmarks List -->
+                <div class="panel-section">
+                    <h3>📚 Saved Bookmarks</h3>
+                    <div class="bookmarks-list" id="bookmarks-list">
+                        <!-- Bookmarks will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include jsFITS from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/jsfitsio/dist/jsfitsio.min.js"></script>
+    
+    <!-- Demo App Script -->
+    <script>
+        // Demo configuration
+        const DEMO_CONFIG = {
+            currentImage: null,
+            images: [],
+            bookmarks: []
+        };
+    </script>
+
+    <!-- Include the enhanced JavaScript files -->
+    <script src="js/imageManager.js"></script>
+    <script src="js/workflowManager.js"></script>
+    <script src="js/viewer.js"></script>
+    <script src="js/bookmarkManager.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
