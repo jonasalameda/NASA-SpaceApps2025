@@ -23,7 +23,9 @@
     "ejs-mate": "^4.0.0",
     "exif-js": "^2.3.0",
     "express": "^5.1.0",
+    "jsfitsio": "^1.2.3",
     "mongodb": "^6.20.0",
+    "multer": "^2.0.2",
     "openseadragon": "^5.0.1"
   }
 }

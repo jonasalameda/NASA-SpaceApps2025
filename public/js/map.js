@@ -3,7 +3,8 @@ const EXIF = require("exif-js");
 
 let xDimesion;
 let yDimesion;
-const img = document.querySelector("img");
+
+const img = "https://esawebb.org/media/archives/images/original/potm2507a.tif";
 // PixelXDimension PixelYDimension
 EXIF.getData(img, () => {
   xDimesion = EXIF.getTag(this, "PixelXDimension");

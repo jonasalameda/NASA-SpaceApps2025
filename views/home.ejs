@@ -390,10 +390,7 @@
             </div>
             
             <div id="viewer-container" class="viewer-container">
-                <div class="loading" id="loading">
-                    <div class="spinner"></div>
-                    <div>Welcome! Upload an image or select a demo image to start.</div>
-                </div>
+                <div id="openseadragon1" style="width: 100%; height: 100%;"></div>
                 <div id="tiles-container" class="tiles-container"></div>
             </div>
 
@@ -539,10 +536,20 @@
     </script>
 
     <!-- Include the enhanced JavaScript files -->
-    <script src="js/imageManager.js"></script>
-    <script src="js/workflowManager.js"></script>
-    <script src="js/viewer.js"></script>
-    <script src="js/bookmarkManager.js"></script>
-    <script src="js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/openseadragon@5.0/build/openseadragon/openseadragon.min.js"></script>
+    <script type="text/javascript">
+        var viewer = OpenSeadragon({
+            id: "openseadragon1",
+            prefixUrl: "/openseadragon/images/",
+            tileSources: {
+                type: 'image',
+                url:  'https://cdn.esawebb.org/archives/images/large/potm2409a.jpg',
+                buildPyramid: false,
+                crossOriginPolicy: 'Anonymous',
+
+            }
+            
+        });
+    </script>
 </body>
 </html>
